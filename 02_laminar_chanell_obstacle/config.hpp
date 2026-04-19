@@ -22,10 +22,10 @@ constexpr double nu = U_in * H / Re;
 // SIMPLE-like pseudo-time and relaxation parameters.
 constexpr int max_iterations = 3000;
 constexpr int pressure_iterations = 200;
-constexpr double pseudo_dt = 0.02;
+constexpr double pseudo_dt = 0.01;
 constexpr double alpha_u = 0.4;
 constexpr double alpha_v = 0.4;
-constexpr double alpha_p = 0.15;
+constexpr double alpha_p = 0.10;
 
 constexpr int report_interval = 25;
 
