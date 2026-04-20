@@ -15,6 +15,7 @@ int main() {
         ScalarField1D(mesh.nx, 0.0),
         ScalarField1D(mesh.nx, 0.0),
         ScalarField1D(mesh.nx, 0.0),
+        ScalarField1D(mesh.nx, 0.0),
         ScalarField1D(mesh.nx, 0.0)
     };
 
@@ -48,9 +49,8 @@ int main() {
                                config::gas_constant,
                                config::cfl,
                                config::artificial_viscosity,
-                               config::rho_inlet,
-                               config::u_inlet,
-                               config::p_inlet,
+                               config::T0_inlet,
+                               config::p0_inlet,
                                config::p_exit,
                                primitive,
                                conservative);
@@ -61,7 +61,9 @@ int main() {
                       << "  drho_l2=" << diagnostics.rho_change
                       << "  du_l2=" << diagnostics.u_change
                       << "  dp_l2=" << diagnostics.p_change
-                      << "  maxM=" << diagnostics.max_mach << '\n';
+                      << "  M_throat=" << diagnostics.throat_mach
+                      << "  maxM=" << diagnostics.max_mach
+                      << "  mdot_span=" << diagnostics.mass_flow_variation << '\n';
         }
     }
 

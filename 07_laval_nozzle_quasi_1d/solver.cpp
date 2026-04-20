@@ -42,36 +42,42 @@ void update_primitive_from_conservative(const ScalarField1D& area,
         primitive.p(i) = p;
         primitive.T(i) = T;
         primitive.M(i) = u / a;
+        primitive.mdot(i) = rho * u * area(i);
     }
 }
 
 void apply_boundary_conditions(const ScalarField1D& area,
                                double gamma_value,
                                double gas_constant,
-                               double rho_inlet,
-                               double u_inlet,
-                               double p_inlet,
+                               double T0_inlet,
+                               double p0_inlet,
                                double p_exit,
                                PrimitiveFields& primitive,
                                ConservativeFields& conservative) {
     const int n = primitive.rho.size();
 
-    // Simple subsonic inlet: fix density and pressure, extrapolate velocity
-    // from the interior. This is less aggressive than fixing all primitives.
-    primitive.rho(0) = rho_inlet;
-    primitive.p(0) = p_inlet;
+    // More physical subsonic inlet:
+    // prescribe stagnation pressure/temperature and recover static state
+    // from the extrapolated inflow velocity.
     primitive.u(0) = std::max(0.0, 2.0 * primitive.u(1) - primitive.u(2));
+    const double cp = gamma_value / (gamma_value - 1.0) * gas_constant;
+    const double T_inlet = std::max(1.0e-8, T0_inlet - 0.5 * primitive.u(0) * primitive.u(0) / cp);
+    primitive.p(0) = p0_inlet * std::pow(T_inlet / T0_inlet, gamma_value / (gamma_value - 1.0));
+    primitive.rho(0) = primitive.p(0) / (gas_constant * T_inlet);
 
-    // Simple subsonic outlet: extrapolate rho and u, fix static pressure.
+    // Outlet:
+    // for subsonic flow impose static pressure,
+    // for supersonic flow just extrapolate all primitive variables.
     primitive.rho(n - 1) = std::max(rho_floor, 2.0 * primitive.rho(n - 2) - primitive.rho(n - 3));
     primitive.u(n - 1) = 2.0 * primitive.u(n - 2) - primitive.u(n - 3);
-    primitive.p(n - 1) = p_exit;
-
-    (void)u_inlet;
+    primitive.p(n - 1) = (std::abs(primitive.M(n - 2)) < 1.0)
+                             ? p_exit
+                             : (2.0 * primitive.p(n - 2) - primitive.p(n - 3));
 
     for (int i : {0, n - 1}) {
         primitive.T(i) = primitive.p(i) / (primitive.rho(i) * gas_constant);
         primitive.M(i) = primitive.u(i) / sound_speed(primitive.p(i), primitive.rho(i), gamma_value);
+        primitive.mdot(i) = primitive.rho(i) * primitive.u(i) * area(i);
     }
 
     update_conservative_from_primitive(area, gamma_value, primitive, conservative);
@@ -133,6 +139,7 @@ void initialize_solution(const Mesh1D& mesh,
     primitive.p = ScalarField1D(mesh.nx, p_initial);
     primitive.T = ScalarField1D(mesh.nx, p_initial / (rho_initial * gas_constant));
     primitive.M = ScalarField1D(mesh.nx, 0.0);
+    primitive.mdot = ScalarField1D(mesh.nx, 0.0);
 
     conservative.U1 = ScalarField1D(mesh.nx, 0.0);
     conservative.U2 = ScalarField1D(mesh.nx, 0.0);
@@ -148,6 +155,7 @@ void initialize_solution(const Mesh1D& mesh,
         primitive.p(i) = p_initial * shape;
         primitive.T(i) = primitive.p(i) / (primitive.rho(i) * gas_constant);
         primitive.M(i) = primitive.u(i) / sound_speed(primitive.p(i), primitive.rho(i), gamma_value);
+        primitive.mdot(i) = primitive.rho(i) * primitive.u(i) * area(i);
     }
 
     update_conservative_from_primitive(area, gamma_value, primitive, conservative);
@@ -159,9 +167,8 @@ StepDiagnostics advance_maccormack(const Mesh1D& mesh,
                                    double gas_constant,
                                    double cfl,
                                    double artificial_viscosity,
-                                   double rho_inlet,
-                                   double u_inlet,
-                                   double p_inlet,
+                                   double T0_inlet,
+                                   double p0_inlet,
                                    double p_exit,
                                    PrimitiveFields& primitive,
                                    ConservativeFields& conservative) {
@@ -202,7 +209,7 @@ StepDiagnostics advance_maccormack(const Mesh1D& mesh,
 
     PrimitiveFields primitive_predictor = primitive;
     update_primitive_from_conservative(area, gamma_value, gas_constant, predictor, primitive_predictor);
-    apply_boundary_conditions(area, gamma_value, gas_constant, rho_inlet, u_inlet, p_inlet, p_exit, primitive_predictor, predictor);
+    apply_boundary_conditions(area, gamma_value, gas_constant, T0_inlet, p0_inlet, p_exit, primitive_predictor, predictor);
 
     ScalarField1D F1p(n, 0.0);
     ScalarField1D F2p(n, 0.0);
@@ -240,23 +247,29 @@ StepDiagnostics advance_maccormack(const Mesh1D& mesh,
 
     stabilize_conservative_fields(mesh, gamma_value, artificial_viscosity, conservative);
     update_primitive_from_conservative(area, gamma_value, gas_constant, conservative, primitive);
-    apply_boundary_conditions(area, gamma_value, gas_constant, rho_inlet, u_inlet, p_inlet, p_exit, primitive, conservative);
+    apply_boundary_conditions(area, gamma_value, gas_constant, T0_inlet, p0_inlet, p_exit, primitive, conservative);
 
     double rho_sum = 0.0;
     double u_sum = 0.0;
     double p_sum = 0.0;
     diagnostics.max_mach = 0.0;
+    double mdot_min = 1.0e30;
+    double mdot_max = -1.0e30;
 
     for (int i = 0; i < n; ++i) {
         rho_sum += (primitive.rho(i) - primitive_old.rho(i)) * (primitive.rho(i) - primitive_old.rho(i));
         u_sum += (primitive.u(i) - primitive_old.u(i)) * (primitive.u(i) - primitive_old.u(i));
         p_sum += (primitive.p(i) - primitive_old.p(i)) * (primitive.p(i) - primitive_old.p(i));
         diagnostics.max_mach = std::max(diagnostics.max_mach, std::abs(primitive.M(i)));
+        diagnostics.throat_mach = std::abs(primitive.M(mesh.nx / 2));
+        mdot_min = std::min(mdot_min, primitive.mdot(i));
+        mdot_max = std::max(mdot_max, primitive.mdot(i));
     }
 
     diagnostics.rho_change = std::sqrt(rho_sum / static_cast<double>(n));
     diagnostics.u_change = std::sqrt(u_sum / static_cast<double>(n));
     diagnostics.p_change = std::sqrt(p_sum / static_cast<double>(n));
+    diagnostics.mass_flow_variation = mdot_max - mdot_min;
 
     return diagnostics;
 }

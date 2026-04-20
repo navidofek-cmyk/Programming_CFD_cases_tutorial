@@ -25,6 +25,8 @@ The solver uses:
 - explicit MacCormack predictor-corrector scheme
 - CFL-based time step
 - small artificial viscosity on conservative variables for robustness
+- inlet stagnation pressure / temperature treatment
+- outlet static-pressure condition for subsonic exit flow
 
 This is a classic educational nozzle-flow method because it is:
 
@@ -61,6 +63,7 @@ with columns:
 - `p`
 - `T`
 - `M`
+- `mdot`
 
 where `M` is the Mach number.
 
@@ -87,9 +90,9 @@ make run
 
 - This is an educational quasi-1D solver, not a production nozzle code.
 - Boundary conditions are intentionally simplified.
-- The current version uses a more conservative subsonic inlet/outlet treatment than the first draft:
-  - inlet fixes `rho` and `p`, but extrapolates `u`
-  - outlet fixes static pressure, but extrapolates `rho` and `u`
+- The current version uses a more physical subsonic treatment than the first draft:
+  - inlet prescribes `T0` and `p0`, then recovers static state from the extrapolated inflow velocity
+  - outlet prescribes static pressure only when the exit remains subsonic
 - It is useful for studying:
   - subsonic acceleration
   - choking tendencies

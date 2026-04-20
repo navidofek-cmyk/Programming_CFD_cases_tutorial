@@ -24,11 +24,10 @@ constexpr double u_initial = 0.1;
 constexpr double p_initial = 1.0;
 
 // Boundary conditions:
-// inlet: fixed total-like primitive state by simple educational forcing
-// outlet: fixed static pressure
-constexpr double rho_inlet = 1.0;
-constexpr double u_inlet = 0.1;
-constexpr double p_inlet = 1.0;
+// inlet: prescribed stagnation state, with velocity extrapolated from interior
+// outlet: prescribed static pressure if subsonic, extrapolated if supersonic
+constexpr double T0_inlet = 1.0;
+constexpr double p0_inlet = 1.0;
 
 constexpr double p_exit = 0.6784;
 

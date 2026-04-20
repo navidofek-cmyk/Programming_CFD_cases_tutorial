@@ -21,6 +21,7 @@ The goal of this repository is to build readable numerical examples step by step
 | `05_laminar_channel_simple` | Simple laminar channel / Poiseuille case | Staggered channel solver | available |
 | `06_exact_riemann_solver_1d_euler` | Exact 1D Euler reference case | Exact Riemann solution | available |
 | `07_laval_nozzle_quasi_1d` | Quasi-1D compressible Laval nozzle | Explicit MacCormack + area source term | available |
+| `08_2d_euler_quadrant_riemann` | First 2D compressible Euler case | 2D FV + Rusanov flux | available |
 
 ## 01_cavity_case
 
@@ -137,6 +138,22 @@ Educational compressible nozzle-flow case:
 cd 07_laval_nozzle_quasi_1d
 make
 ./nozzle_solver
+```
+
+## 08_2d_euler_quadrant_riemann
+
+Educational first 2D compressible Euler solver:
+
+- quadrant Riemann initial data
+- cell-centered finite volume method
+- explicit time stepping
+- local Rusanov fluxes in `x` and `y`
+- VTK snapshots for ParaView
+
+```bash
+cd 08_2d_euler_quadrant_riemann
+make
+./euler2d
 ```
 
 ## Notes

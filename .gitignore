@@ -27,3 +27,6 @@
 
 07_laval_nozzle_quasi_1d/nozzle_solver
 07_laval_nozzle_quasi_1d/*.csv
+
+08_2d_euler_quadrant_riemann/euler2d
+08_2d_euler_quadrant_riemann/output/

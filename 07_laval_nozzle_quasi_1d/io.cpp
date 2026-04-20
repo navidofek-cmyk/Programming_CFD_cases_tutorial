@@ -9,7 +9,7 @@ void write_solution_csv(const std::string& filename,
                         const PrimitiveFields& primitive) {
     std::ofstream out(filename);
     out << std::setprecision(16);
-    out << "x,A,rho,u,p,T,M\n";
+    out << "x,A,rho,u,p,T,M,mdot\n";
 
     for (int i = 0; i < mesh.nx; ++i) {
         out << mesh.x[static_cast<std::size_t>(i)] << ','
@@ -18,6 +18,7 @@ void write_solution_csv(const std::string& filename,
             << primitive.u(i) << ','
             << primitive.p(i) << ','
             << primitive.T(i) << ','
-            << primitive.M(i) << '\n';
+            << primitive.M(i) << ','
+            << primitive.mdot(i) << '\n';
     }
 }
