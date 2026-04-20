@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 230" width="820" height="230" font-family="monospace" font-size="12">
+
+  <!-- Background -->
+  <rect x="0" y="0" width="820" height="230" fill="#f8f9fa"/>
+
+  <!-- Channel fluid domain -->
+  <rect x="60" y="30" width="700" height="160" fill="#ddeeff" stroke="#334" stroke-width="1.5"/>
+
+  <!-- Obstacle -->
+  <rect x="235" y="90" width="22" height="40" fill="#445566" stroke="#223" stroke-width="1"/>
+
+  <!-- Grid lines (coarse illustration) -->
+  <g stroke="#aac8e8" stroke-width="0.4" opacity="0.6">
+    <!-- vertical -->
+    <line x1="104" y1="30" x2="104" y2="190"/>
+    <line x1="148" y1="30" x2="148" y2="190"/>
+    <line x1="192" y1="30" x2="192" y2="190"/>
+    <line x1="279" y1="30" x2="279" y2="190"/>
+    <line x1="323" y1="30" x2="323" y2="190"/>
+    <line x1="367" y1="30" x2="367" y2="190"/>
+    <line x1="411" y1="30" x2="411" y2="190"/>
+    <line x1="455" y1="30" x2="455" y2="190"/>
+    <line x1="499" y1="30" x2="499" y2="190"/>
+    <line x1="543" y1="30" x2="543" y2="190"/>
+    <line x1="587" y1="30" x2="587" y2="190"/>
+    <line x1="631" y1="30" x2="631" y2="190"/>
+    <line x1="675" y1="30" x2="675" y2="190"/>
+    <line x1="719" y1="30" x2="719" y2="190"/>
+    <!-- horizontal -->
+    <line x1="60" y1="70"  x2="760" y2="70"/>
+    <line x1="60" y1="110" x2="760" y2="110"/>
+    <line x1="60" y1="150" x2="760" y2="150"/>
+  </g>
+
+  <!-- Top wall -->
+  <rect x="60" y="24" width="700" height="6" fill="#556" rx="1"/>
+  <!-- Bottom wall -->
+  <rect x="60" y="190" width="700" height="6" fill="#556" rx="1"/>
+
+  <!-- Inlet arrow -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1a7abf"/>
+    </marker>
+  </defs>
+  <line x1="20" y1="60"  x2="57" y2="60"  stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="20" y1="90"  x2="57" y2="90"  stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="20" y1="110" x2="57" y2="110" stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="20" y1="130" x2="57" y2="130" stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="20" y1="160" x2="57" y2="160" stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="5" y="115" fill="#1a7abf" font-size="11" text-anchor="middle" transform="rotate(-90,5,115)">U_in = 1</text>
+
+  <!-- Outlet arrows -->
+  <line x1="763" y1="60"  x2="800" y2="60"  stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="763" y1="90"  x2="800" y2="90"  stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="763" y1="110" x2="800" y2="110" stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="763" y1="130" x2="800" y2="130" stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="763" y1="160" x2="800" y2="160" stroke="#1a7abf" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="815" y="115" fill="#1a7abf" font-size="11" text-anchor="middle" transform="rotate(90,815,115)">p = 0</text>
+
+  <!-- Dimension: Lx -->
+  <line x1="60" y1="210" x2="760" y2="210" stroke="#333" stroke-width="1"/>
+  <line x1="60" y1="205" x2="60" y2="215" stroke="#333" stroke-width="1"/>
+  <line x1="760" y1="205" x2="760" y2="215" stroke="#333" stroke-width="1"/>
+  <text x="410" y="224" fill="#333" font-size="12" text-anchor="middle">Lx = 32 H</text>
+
+  <!-- Dimension: Ly -->
+  <line x1="38" y1="30" x2="38" y2="190" stroke="#333" stroke-width="1"/>
+  <line x1="33" y1="30" x2="43" y2="30" stroke="#333" stroke-width="1"/>
+  <line x1="33" y1="190" x2="43" y2="190" stroke="#333" stroke-width="1"/>
+  <text x="28" y="115" fill="#333" font-size="12" text-anchor="middle" transform="rotate(-90,28,115)">Ly = 8 H</text>
+
+  <!-- Obstacle label -->
+  <text x="246" y="85" fill="#eef" font-size="9" text-anchor="middle">obs</text>
+
+  <!-- Obstacle dimension x -->
+  <line x1="235" y1="78" x2="257" y2="78" stroke="#cc4" stroke-width="0.8"/>
+  <text x="246" y="76" fill="#996600" font-size="9" text-anchor="middle">1H</text>
+
+  <!-- x-position of obstacle -->
+  <line x1="60"  y1="140" x2="235" y2="140" stroke="#b04020" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <text x="148" y="138" fill="#b04020" font-size="10" text-anchor="middle">8H</text>
+
+  <!-- Labels -->
+  <text x="410" y="18" fill="#334" font-size="13" text-anchor="middle" font-weight="bold">2D Channel + Obstacle — computational domain</text>
+
+  <!-- Wall labels -->
+  <text x="410" y="22" fill="#fff" font-size="9" text-anchor="middle">no-slip wall  (v = 0, du/dy → 0)</text>
+  <text x="410" y="204" fill="#fff" font-size="9" text-anchor="middle">no-slip wall</text>
+  <rect x="240" y="17" width="340" height="10" fill="#556" opacity="0.0"/>
+
+  <text x="200" y="15" fill="#556" font-size="10">no-slip  (v=0)</text>
+  <text x="200" y="228" fill="#556" font-size="10">no-slip  (v=0)</text>
+
+  <!-- Staggered grid legend -->
+  <rect x="580" y="38" width="172" height="62" fill="white" stroke="#bbb" stroke-width="0.8" rx="3"/>
+  <text x="590" y="52" fill="#333" font-size="10" font-weight="bold">Staggered MAC grid</text>
+  <line x1="590" y1="65" x2="610" y2="65" stroke="#1a7abf" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="615" y="68" fill="#333" font-size="10">u  (x-face, →)</text>
+  <line x1="600" y1="72" x2="600" y2="84" stroke="#e06020" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="615" y="83" fill="#333" font-size="10">v  (y-face, ↑)</text>
+  <circle cx="746" cy="88" r="3" fill="#2a9" stroke="#1a7" stroke-width="0.8"/>
+  <text x="752" y="91" fill="#333" font-size="10">p  (centre)</text>
+</svg>

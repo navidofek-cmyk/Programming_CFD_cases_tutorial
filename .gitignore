@@ -6,17 +6,17 @@
 01_cavity_case/*.csv
 01_cavity_case/*.vtk
 
-02_laminar_chanell_obstacle/channel_obstacle
-02_laminar_chanell_obstacle/*.csv
+02_laminar_channel_obstacle/channel_obstacle
+02_laminar_channel_obstacle/*.csv
 
 03_channel_obstacle_unsteady/channel_obstacle_unsteady
 03_channel_obstacle_unsteady/*.csv
 03_channel_obstacle_unsteady/output/
 
-04_laminar_chanell_obstacle_rebuild/cfd_channel
-04_laminar_chanell_obstacle_rebuild/cfd_debug
-04_laminar_chanell_obstacle_rebuild/*.csv
-04_laminar_chanell_obstacle_rebuild/*.log
+04_laminar_channel_obstacle_rebuild/cfd_channel
+04_laminar_channel_obstacle_rebuild/cfd_debug
+04_laminar_channel_obstacle_rebuild/*.csv
+04_laminar_channel_obstacle_rebuild/*.log
 
 05_laminar_channel_simple/channel_flow
 05_laminar_channel_simple/*.csv

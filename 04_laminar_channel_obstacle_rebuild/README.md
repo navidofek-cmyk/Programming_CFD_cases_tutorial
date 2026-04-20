@@ -3,6 +3,8 @@
 Educational C++20 implementation of a 2D incompressible laminar Navier-Stokes solver
 using the staggered MAC grid and the SIMPLE pressure-velocity coupling algorithm.
 
+![domain](domain.svg)
+
 ## Physics
 
 - **Governing equations:** 2D incompressible Navier-Stokes (steady-state)

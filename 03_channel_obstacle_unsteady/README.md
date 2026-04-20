@@ -6,7 +6,7 @@ Small educational transient CFD case for 2D incompressible flow in a channel wit
 
 This case is the unsteady companion to the steady obstacle case:
 
-- `02_laminar_chanell_obstacle` stays as a steady SIMPLE-like solver
+- `02_laminar_channel_obstacle` stays as a steady SIMPLE-like solver
 - `03_channel_obstacle_unsteady` treats the wake as a real time-dependent problem
 
 The code uses:

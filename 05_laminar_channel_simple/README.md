@@ -5,7 +5,7 @@ SIMPLE algorithm on a staggered (MAC) grid.  At full development the
 velocity profile is parabolic (Hagen–Poiseuille); the analytic maximum
 is `u_max = 1.5 · U_in`.
 
-![CFD domain and staggered cell](figures/domain.png)
+![CFD domain and staggered cell](figures/domain.svg)
 
 ---
 

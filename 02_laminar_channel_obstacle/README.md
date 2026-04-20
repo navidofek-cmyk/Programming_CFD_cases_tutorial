@@ -1,4 +1,4 @@
-# 02_laminar_chanell_obstacle
+# 02_laminar_channel_obstacle
 
 Malý edukativní C++20 solver inspirovaný strukturou jednoduchých CFD solverů:
 
@@ -63,7 +63,7 @@ Použitá schémata:
 ## Build
 
 ```bash
-cd /home/ivand/projects/learning_cpp/cfd/programming_cfd_cases/02_laminar_chanell_obstacle
+cd /home/ivand/projects/learning_cpp/cfd/programming_cfd_cases/02_laminar_channel_obstacle
 make
 ```
 

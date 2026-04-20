@@ -15,9 +15,9 @@ The goal of this repository is to build readable numerical examples step by step
 | Case | Description | Method | Status |
 |---|---|---|---|
 | `01_cavity_case` | Lid-driven cavity | Finite differences + projection | available |
-| `02_laminar_chanell_obstacle` | Steady channel flow with square obstacle | Cell-centered FVM + SIMPLE-like pseudo-time | available |
+| `02_laminar_channel_obstacle` | Steady channel flow with square obstacle | Cell-centered FVM + SIMPLE-like pseudo-time | available |
 | `03_channel_obstacle_unsteady` | Unsteady channel flow with square obstacle | Cell-centered transient solver + PISO-like corrections | available |
-| `04_laminar_chanell_obstacle_rebuild` | Rebuilt steady obstacle solver | Staggered MAC-style layout + SIMPLE/SOR | available |
+| `04_laminar_channel_obstacle_rebuild` | Rebuilt steady obstacle solver | Staggered MAC-style layout + SIMPLE/SOR | available |
 | `05_laminar_channel_simple` | Simple laminar channel / Poiseuille case | Staggered channel solver | available |
 
 ## 01_cavity_case
@@ -36,7 +36,7 @@ cd 01_cavity_case
 ./run.sh
 ```
 
-## 02_laminar_chanell_obstacle
+## 02_laminar_channel_obstacle
 
 2D laminar channel flow with a square obstacle:
 
@@ -55,7 +55,7 @@ This case is intentionally simple and educational. It is useful for studying:
 - practical convergence behavior of a simple segregated solver
 
 ```bash
-cd 02_laminar_chanell_obstacle
+cd 02_laminar_channel_obstacle
 make
 ./channel_obstacle
 ```
@@ -79,7 +79,7 @@ make
 ./channel_obstacle_unsteady
 ```
 
-## 04_laminar_chanell_obstacle_rebuild
+## 04_laminar_channel_obstacle_rebuild
 
 Rebuilt steady channel-with-obstacle case with a cleaner pressure-velocity arrangement:
 
@@ -89,7 +89,7 @@ Rebuilt steady channel-with-obstacle case with a cleaner pressure-velocity arran
 - CSV output
 
 ```bash
-cd 04_laminar_chanell_obstacle_rebuild
+cd 04_laminar_channel_obstacle_rebuild
 make
 ./cfd_channel
 ```

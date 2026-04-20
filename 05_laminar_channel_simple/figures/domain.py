@@ -124,5 +124,5 @@ handles = [
 ax2.legend(handles=handles, loc="lower left", fontsize=9, framealpha=0.9)
 
 plt.tight_layout()
-plt.savefig("domain.png", dpi=150, bbox_inches="tight")
-print("Saved domain.png")
+plt.savefig("domain.svg", bbox_inches="tight")
+print("Saved domain.svg")
