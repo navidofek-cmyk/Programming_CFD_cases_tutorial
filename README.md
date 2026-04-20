@@ -19,6 +19,7 @@ The goal of this repository is to build readable numerical examples step by step
 | `03_channel_obstacle_unsteady` | Unsteady channel flow with square obstacle | Cell-centered transient solver + PISO-like corrections | available |
 | `04_laminar_channel_obstacle_rebuild` | Rebuilt steady obstacle solver | Staggered MAC-style layout + SIMPLE/SOR | available |
 | `05_laminar_channel_simple` | Simple laminar channel / Poiseuille case | Staggered channel solver | available |
+| `07_laval_nozzle_quasi_1d` | Quasi-1D compressible Laval nozzle | Explicit MacCormack + area source term | available |
 
 ## 01_cavity_case
 
@@ -106,6 +107,21 @@ Simple laminar channel-flow case intended as a cleaner reference problem:
 cd 05_laminar_channel_simple
 make
 ./channel_flow
+```
+
+## 07_laval_nozzle_quasi_1d
+
+Educational compressible nozzle-flow case:
+
+- quasi-1D Euler equations
+- variable area duct
+- explicit MacCormack predictor-corrector
+- CSV output for `rho`, `u`, `p`, `T`, `M`
+
+```bash
+cd 07_laval_nozzle_quasi_1d
+make
+./nozzle_solver
 ```
 
 ## Notes

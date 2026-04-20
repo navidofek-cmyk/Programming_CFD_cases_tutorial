@@ -21,3 +21,6 @@
 05_laminar_channel_simple/channel_flow
 05_laminar_channel_simple/*.csv
 05_laminar_channel_simple/*.vtk
+
+07_laval_nozzle_quasi_1d/nozzle_solver
+07_laval_nozzle_quasi_1d/*.csv
