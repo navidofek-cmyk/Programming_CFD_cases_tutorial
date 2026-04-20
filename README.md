@@ -17,6 +17,8 @@ The goal of this repository is to build readable numerical examples step by step
 | `01_cavity_case` | Lid-driven cavity | Finite differences + projection | available |
 | `02_laminar_chanell_obstacle` | Steady channel flow with square obstacle | Cell-centered FVM + SIMPLE-like pseudo-time | available |
 | `03_channel_obstacle_unsteady` | Unsteady channel flow with square obstacle | Cell-centered transient solver + PISO-like corrections | available |
+| `04_laminar_chanell_obstacle_rebuild` | Rebuilt steady obstacle solver | Staggered MAC-style layout + SIMPLE/SOR | available |
+| `05_laminar_channel_simple` | Simple laminar channel / Poiseuille case | Staggered channel solver | available |
 
 ## 01_cavity_case
 
@@ -75,6 +77,35 @@ This case is meant for studying actual wake development in time instead of forci
 cd 03_channel_obstacle_unsteady
 make
 ./channel_obstacle_unsteady
+```
+
+## 04_laminar_chanell_obstacle_rebuild
+
+Rebuilt steady channel-with-obstacle case with a cleaner pressure-velocity arrangement:
+
+- staggered / MAC-style variable placement
+- SIMPLE-like steady coupling
+- structured Cartesian mesh
+- CSV output
+
+```bash
+cd 04_laminar_chanell_obstacle_rebuild
+make
+./cfd_channel
+```
+
+## 05_laminar_channel_simple
+
+Simple laminar channel-flow case intended as a cleaner reference problem:
+
+- structured channel geometry
+- staggered-style formulation
+- useful for comparing against expected Poiseuille-like behavior
+
+```bash
+cd 05_laminar_channel_simple
+make
+./channel_flow
 ```
 
 ## Notes

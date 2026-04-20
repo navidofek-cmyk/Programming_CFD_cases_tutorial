@@ -13,4 +13,11 @@
 03_channel_obstacle_unsteady/*.csv
 03_channel_obstacle_unsteady/output/
 
-05_laminar_channel_simple/
+04_laminar_chanell_obstacle_rebuild/cfd_channel
+04_laminar_chanell_obstacle_rebuild/cfd_debug
+04_laminar_chanell_obstacle_rebuild/*.csv
+04_laminar_chanell_obstacle_rebuild/*.log
+
+05_laminar_channel_simple/channel_flow
+05_laminar_channel_simple/*.csv
+05_laminar_channel_simple/*.vtk
