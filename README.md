@@ -22,6 +22,8 @@ The goal of this repository is to build readable numerical examples step by step
 | `06_exact_riemann_solver_1d_euler` | Exact 1D Euler reference case | Exact Riemann solution | available |
 | `07_laval_nozzle_quasi_1d` | Quasi-1D compressible Laval nozzle | Explicit MacCormack + area source term | available |
 | `08_2d_euler_quadrant_riemann` | First 2D compressible Euler case | 2D FV + Rusanov flux | available |
+| `09_2d_euler_oblique_shock` | Supersonic ramp / wedge case | 2D FV + Rusanov flux | available |
+| `10_hllc_muscl_upgrade` | Sharper oblique-shock upgrade | HLLC + MUSCL + minmod | available |
 
 ## 01_cavity_case
 
@@ -154,6 +156,38 @@ Educational first 2D compressible Euler solver:
 cd 08_2d_euler_quadrant_riemann
 make
 ./euler2d
+```
+
+## 09_2d_euler_oblique_shock
+
+Educational oblique-shock case:
+
+- supersonic inlet
+- stair-step ramp mask on a Cartesian grid
+- 2D Euler finite volume method
+- explicit CFL stepping
+- Rusanov flux
+- VTK snapshots
+
+```bash
+cd 09_2d_euler_oblique_shock
+make
+./oblique_shock
+```
+
+## 10_hllc_muscl_upgrade
+
+Numerical upgrade of the oblique-shock case:
+
+- same ramp geometry as `09`
+- HLLC approximate Riemann solver
+- MUSCL reconstruction
+- minmod slope limiter
+
+```bash
+cd 10_hllc_muscl_upgrade
+make
+./oblique_shock_hllc
 ```
 
 ## Notes

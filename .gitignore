@@ -30,3 +30,11 @@
 
 08_2d_euler_quadrant_riemann/euler2d
 08_2d_euler_quadrant_riemann/output/
+
+09_2d_euler_oblique_shock/oblique_shock
+09_2d_euler_oblique_shock/output/
+
+10_hllc_muscl_upgrade/oblique_shock_hllc
+10_hllc_muscl_upgrade/output/
+
+chat_history/
