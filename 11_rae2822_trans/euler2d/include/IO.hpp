@@ -2,6 +2,10 @@
 #include <string>
 
 class Solver;
+struct Mesh;
+
+// Write mesh geometry + quality as VTK StructuredGrid (.vts) for ParaView
+void write_mesh_vts(const Mesh& m, const std::string& path);
 
 // Write full flow field as VTK StructuredGrid (.vts) for ParaView
 void write_field(const Solver& s, const std::string& path);

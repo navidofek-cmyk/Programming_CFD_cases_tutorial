@@ -1,8 +1,64 @@
 #include "IO.hpp"
 #include "Solver.hpp"
+#include "Mesh.hpp"
 #include <fstream>
 #include <cmath>
 #include <stdexcept>
+#include <algorithm>
+
+// ---- mesh VTK export --------------------------------------------------------
+
+void write_mesh_vts(const Mesh& m, const std::string& path) {
+    int nci = m.nc_i(), ncj = m.nc_j();
+    int ni  = m.ni,     nj  = m.nj;
+
+    std::ofstream f(path);
+    if (!f) throw std::runtime_error("Cannot open " + path);
+
+    f << "<?xml version=\"1.0\"?>\n"
+      << "<VTKFile type=\"StructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+      << "  <StructuredGrid WholeExtent=\"0 " << nci << " 0 " << ncj << " 0 0\">\n"
+      << "    <Piece Extent=\"0 " << nci << " 0 " << ncj << " 0 0\">\n";
+
+    f << "      <Points>\n"
+      << "        <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+    for (int j = 0; j < nj; ++j)
+        for (int i = 0; i < ni; ++i)
+            f << m.node_x(i,j) << " " << m.node_y(i,j) << " 0\n";
+    f << "        </DataArray>\n"
+      << "      </Points>\n";
+
+    f << "      <CellData Scalars=\"area\">\n";
+
+    // Cell area
+    f << "        <DataArray type=\"Float64\" Name=\"area\" format=\"ascii\">\n";
+    for (int j = 0; j < ncj; ++j)
+        for (int i = 0; i < nci; ++i)
+            f << m.area[j * nci + i] << "\n";
+    f << "        </DataArray>\n";
+
+    // Aspect ratio = max(ds_i, ds_j) / min(ds_i, ds_j)
+    f << "        <DataArray type=\"Float64\" Name=\"aspect_ratio\" format=\"ascii\">\n";
+    for (int j = 0; j < ncj; ++j) {
+        for (int i = 0; i < nci; ++i) {
+            double dxi = m.node_x(i+1,j) - m.node_x(i,j);
+            double dyi = m.node_y(i+1,j) - m.node_y(i,j);
+            double ds_i = std::sqrt(dxi*dxi + dyi*dyi);
+            double dxj = m.node_x(i,j+1) - m.node_x(i,j);
+            double dyj = m.node_y(i,j+1) - m.node_y(i,j);
+            double ds_j = std::sqrt(dxj*dxj + dyj*dyj);
+            double ar = (ds_j > 1e-30 && ds_i > 1e-30)
+                        ? std::max(ds_i, ds_j) / std::min(ds_i, ds_j) : 0.0;
+            f << ar << "\n";
+        }
+    }
+    f << "        </DataArray>\n";
+
+    f << "      </CellData>\n"
+      << "    </Piece>\n"
+      << "  </StructuredGrid>\n"
+      << "</VTKFile>\n";
+}
 
 // ---- VTK StructuredGrid writer (.vts) ---------------------------------------
 //

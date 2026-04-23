@@ -19,7 +19,7 @@ public:
     double rho_inf, u_inf, v_inf, p_inf, E_inf;
 
     // ---- run config ----
-    double cfl, residual_drop;
+    double cfl, cfl_muscl, residual_drop;
     int    max_iter, scheme_order, warmup_iters, output_interval;
 
     const Mesh* pmesh = nullptr;
@@ -27,7 +27,8 @@ public:
     // Initialize field to freestream + apply first BC pass
     void init(const Mesh& m,
               double mach, double aoa_deg, double gamma,
-              double cfl, int max_iter, double residual_drop,
+              double cfl, double cfl_muscl,
+              int max_iter, double residual_drop,
               int scheme_order, int warmup_iters, int output_interval);
 
     // Run the solver loop (SSP-RK3 + local time stepping)

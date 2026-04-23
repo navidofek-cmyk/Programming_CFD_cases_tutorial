@@ -1,5 +1,6 @@
 #include "Mesh.hpp"
 #include "Solver.hpp"
+#include "IO.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
     int    max_iter      = std::stoi(get_param(ini, "max_iter",       "20000"));
     double residual_drop = std::stod(get_param(ini, "residual_drop",  "1e-5"));
     int    scheme_order    = std::stoi(get_param(ini, "scheme_order",    "2"));
+    double cfl_muscl       = std::stod(get_param(ini, "cfl_muscl",       "0.8"));
     int    warmup_iters    = std::stoi(get_param(ini, "warmup_iters",    "0"));
     int    output_interval = std::stoi(get_param(ini, "output_interval", "500"));
 
@@ -129,7 +131,8 @@ int main(int argc, char* argv[]) {
     std::cout << "  Max AR at wall:     " << ar_max << "\n";
 
     mesh.write_tecplot("output/mesh.dat");
-    std::cout << "\nWrote output/mesh.dat\n";
+    write_mesh_vts(mesh, "output/mesh.vts");
+    std::cout << "\nWrote output/mesh.dat  output/mesh.vts\n";
 
     // ---- Stage 2: solver data structures + BCs ----
     std::cout << "\n--- Stage 2: initialising solver ---\n";
@@ -137,7 +140,7 @@ int main(int argc, char* argv[]) {
 
     Solver solver;
     solver.init(mesh, mach, aoa_deg, gamma,
-                cfl, max_iter, residual_drop,
+                cfl, cfl_muscl, max_iter, residual_drop,
                 scheme_order, warmup_iters, output_interval);
 
     solver.print_bc_diagnostics();

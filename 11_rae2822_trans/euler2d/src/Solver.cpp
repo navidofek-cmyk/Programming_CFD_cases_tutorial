@@ -29,13 +29,15 @@ double Solver::sound(int i, int j) const {
 
 void Solver::init(const Mesh& m,
                   double mach_, double aoa_deg_, double gamma_,
-                  double cfl_, int max_iter_, double residual_drop_,
+                  double cfl_, double cfl_muscl_,
+                  int max_iter_, double residual_drop_,
                   int scheme_order_, int warmup_iters_, int output_interval_) {
     pmesh           = &m;
     gamma           = gamma_;
     mach            = mach_;
     aoa_deg         = aoa_deg_;
     cfl             = cfl_;
+    cfl_muscl       = cfl_muscl_;
     max_iter        = max_iter_;
     residual_drop   = residual_drop_;
     scheme_order    = scheme_order_;
@@ -280,10 +282,12 @@ void Solver::run() {
         // Switch from warmup (order=1) to final order
         if (scheme_order < final_order && iter > warmup_iters) {
             scheme_order = final_order;
-            res0 = -1.0;  // reset normalization for MUSCL phase
+            cfl          = cfl_muscl;  // lower CFL for MUSCL phase
+            res0 = -1.0;
             std::cout << "  [order switch] switched to order=" << scheme_order
-                      << " at iter " << iter << "\n";
-            conv << "# switched to order=" << scheme_order << " at iter " << iter << "\n";
+                      << "  CFL=" << cfl << " at iter " << iter << "\n";
+            conv << "# switched to order=" << scheme_order
+                 << " CFL=" << cfl << " at iter " << iter << "\n";
         }
 
         // Save Un for RK combination
