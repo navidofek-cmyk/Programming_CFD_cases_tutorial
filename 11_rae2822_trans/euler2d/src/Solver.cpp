@@ -31,18 +31,20 @@ void Solver::init(const Mesh& m,
                   double mach_, double aoa_deg_, double gamma_,
                   double cfl_, double cfl_muscl_,
                   int max_iter_, double residual_drop_,
-                  int scheme_order_, int warmup_iters_, int output_interval_) {
-    pmesh           = &m;
-    gamma           = gamma_;
-    mach            = mach_;
-    aoa_deg         = aoa_deg_;
-    cfl             = cfl_;
-    cfl_muscl       = cfl_muscl_;
-    max_iter        = max_iter_;
-    residual_drop   = residual_drop_;
-    scheme_order    = scheme_order_;
-    warmup_iters    = warmup_iters_;
-    output_interval = output_interval_;
+                  int scheme_order_, int warmup_iters_,
+                  int muscl_ramp_iters_, int output_interval_) {
+    pmesh            = &m;
+    gamma            = gamma_;
+    mach             = mach_;
+    aoa_deg          = aoa_deg_;
+    cfl              = cfl_;
+    cfl_muscl        = cfl_muscl_;
+    max_iter         = max_iter_;
+    residual_drop    = residual_drop_;
+    scheme_order     = scheme_order_;
+    warmup_iters     = warmup_iters_;
+    muscl_ramp_iters = muscl_ramp_iters_;
+    output_interval  = output_interval_;
 
     nci = m.nc_i();
     ncj = m.nc_j();
@@ -112,22 +114,32 @@ void Solver::compute_rhs(std::vector<double>& R, std::vector<double>& dt_cell) c
         p = press(ci, cj);
     };
 
-    // Van Albada limiter: phi(r) = (r²+r)/(r²+1), clamped to [0, ∞)
-    auto phi_va = [](double r) -> double {
-        return r > 0.0 ? (r*r + r) / (r*r + 1.0) : 0.0;
-    };
-
     // MUSCL reconstruct 1 variable across a face.
-    // bm1, b0, b1, b2 = cells at (m-1, m, m+1, m+2); face is between m and m+1.
-    auto muscl = [&](double bm1, double b0, double b1, double b2,
-                     double& qL, double& qR) {
+    // mf = effective muscl factor (0=first order, 1=full MUSCL), includes shock sensor.
+    auto muscl = [](double bm1, double b0, double b1, double b2,
+                    double mf, double& qL, double& qR) {
+        auto phi = [](double r) -> double {
+            return r > 0.0 ? (r*r + r) / (r*r + 1.0) : 0.0;
+        };
         double dl = b0 - bm1;
         double dc = b1 - b0;
         double dr = b2 - b1;
         double rL = (std::abs(dl) > 1e-14) ? dc / dl : 0.0;
         double rR = (std::abs(dr) > 1e-14) ? dc / dr : 0.0;
-        qL = b0 + 0.5 * phi_va(rL) * dl;
-        qR = b1 - 0.5 * phi_va(rR) * dr;
+        qL = b0 + 0.5 * mf * phi(rL) * dl;
+        qR = b1 - 0.5 * mf * phi(rR) * dr;
+    };
+
+    // Pressure-based shock sensor: returns 0 at strong shocks, 1 in smooth flow.
+    // Eliminates MUSCL limit-cycle oscillations by falling back to 1st order at shocks.
+    auto shock_alpha = [](double pA, double p0, double p1, double pB) -> double {
+        const double eps = 1e-10;
+        double s = std::max({
+            std::abs(p0 - pA) / (p0 + pA + eps),
+            std::abs(p1 - p0) / (p1 + p0 + eps),
+            std::abs(pB - p1) / (pB + p1 + eps)
+        });
+        return std::max(0.0, 1.0 - 3.0 * s);  // 0 when |Δp/p| > 1/3
     };
 
     // ---- i-direction faces: face i is between cell (i-1,j) [L] and (i,j) [R]
@@ -151,10 +163,11 @@ void Solver::compute_rhs(std::vector<double>& R, std::vector<double>& dt_cell) c
                 double rhoA, uA, vA, pA, rhoB, uB, vB, pB;
                 prim(iL - 1, j, rhoA, uA, vA, pA);
                 prim(iR + 1, j, rhoB, uB, vB, pB);
-                muscl(rhoA, rho0, rho1, rhoB, rL, rR);
-                muscl(uA,   u0,   u1,   uB,   uL, uR);
-                muscl(vA,   v0,   v1,   vB,   vL, vR);
-                muscl(pA,   p0,   p1,   pB,   pL, pR);
+                double mf = muscl_factor * shock_alpha(pA, p0, p1, pB);
+                muscl(rhoA, rho0, rho1, rhoB, mf, rL, rR);
+                muscl(uA,   u0,   u1,   uB,   mf, uL, uR);
+                muscl(vA,   v0,   v1,   vB,   mf, vL, vR);
+                muscl(pA,   p0,   p1,   pB,   mf, pL, pR);
             } else {
                 rL = rho0; uL = u0; vL = v0; pL = p0;
                 rR = rho1; uR = u1; vR = v1; pR = p1;
@@ -207,10 +220,11 @@ void Solver::compute_rhs(std::vector<double>& R, std::vector<double>& dt_cell) c
                 double rhoA, uA, vA, pA, rhoB, uB, vB, pB;
                 prim(i, jL - 1, rhoA, uA, vA, pA);
                 prim(i, jR + 1, rhoB, uB, vB, pB);
-                muscl(rhoA, rho0, rho1, rhoB, rL, rR);
-                muscl(uA,   u0,   u1,   uB,   uL, uR);
-                muscl(vA,   v0,   v1,   vB,   vL, vR);
-                muscl(pA,   p0,   p1,   pB,   pL, pR);
+                double mf = muscl_factor * shock_alpha(pA, p0, p1, pB);
+                muscl(rhoA, rho0, rho1, rhoB, mf, rL, rR);
+                muscl(uA,   u0,   u1,   uB,   mf, uL, uR);
+                muscl(vA,   v0,   v1,   vB,   mf, vL, vR);
+                muscl(pA,   p0,   p1,   pB,   mf, pL, pR);
             } else {
                 rL = rho0; uL = u0; vL = v0; pL = p0;
                 rR = rho1; uR = u1; vR = v1; pR = p1;
@@ -282,12 +296,21 @@ void Solver::run() {
         // Switch from warmup (order=1) to final order
         if (scheme_order < final_order && iter > warmup_iters) {
             scheme_order = final_order;
-            cfl          = cfl_muscl;  // lower CFL for MUSCL phase
+            cfl          = cfl_muscl;
             res0 = -1.0;
-            std::cout << "  [order switch] switched to order=" << scheme_order
-                      << "  CFL=" << cfl << " at iter " << iter << "\n";
-            conv << "# switched to order=" << scheme_order
-                 << " CFL=" << cfl << " at iter " << iter << "\n";
+            std::cout << "  [order switch] order=" << scheme_order
+                      << "  CFL=" << cfl << "  ramp=" << muscl_ramp_iters
+                      << " iters  at iter " << iter << "\n";
+            conv << "# order switch iter=" << iter << "\n";
+        }
+
+        // Ramp muscl_factor 0→1 after warmup (ramp_iters=0 means instant switch)
+        if (scheme_order >= 2 && iter > warmup_iters) {
+            if (muscl_ramp_iters <= 0) {
+                muscl_factor = 1.0;
+            } else {
+                muscl_factor = std::min(1.0, (double)(iter - warmup_iters) / muscl_ramp_iters);
+            }
         }
 
         // Save Un for RK combination

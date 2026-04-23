@@ -20,7 +20,10 @@ public:
 
     // ---- run config ----
     double cfl, cfl_muscl, residual_drop;
-    int    max_iter, scheme_order, warmup_iters, output_interval;
+    int    max_iter, scheme_order, warmup_iters, muscl_ramp_iters, output_interval;
+
+    // MUSCL blending factor [0=first order, 1=full MUSCL], updated each iteration in run()
+    double muscl_factor = 0.0;
 
     const Mesh* pmesh = nullptr;
 
@@ -29,7 +32,8 @@ public:
               double mach, double aoa_deg, double gamma,
               double cfl, double cfl_muscl,
               int max_iter, double residual_drop,
-              int scheme_order, int warmup_iters, int output_interval);
+              int scheme_order, int warmup_iters,
+              int muscl_ramp_iters, int output_interval);
 
     // Run the solver loop (SSP-RK3 + local time stepping)
     void run();

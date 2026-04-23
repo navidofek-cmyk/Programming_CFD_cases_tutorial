@@ -70,6 +70,7 @@ int main(int argc, char* argv[]) {
     int    scheme_order    = std::stoi(get_param(ini, "scheme_order",    "2"));
     double cfl_muscl       = std::stod(get_param(ini, "cfl_muscl",       "0.8"));
     int    warmup_iters    = std::stoi(get_param(ini, "warmup_iters",    "0"));
+    int    muscl_ramp_iters = std::stoi(get_param(ini, "muscl_ramp_iters", "3000"));
     int    output_interval = std::stoi(get_param(ini, "output_interval", "500"));
 
     std::filesystem::create_directories("output");
@@ -141,7 +142,8 @@ int main(int argc, char* argv[]) {
     Solver solver;
     solver.init(mesh, mach, aoa_deg, gamma,
                 cfl, cfl_muscl, max_iter, residual_drop,
-                scheme_order, warmup_iters, output_interval);
+                scheme_order, warmup_iters,
+                muscl_ramp_iters, output_interval);
 
     solver.print_bc_diagnostics();
 
