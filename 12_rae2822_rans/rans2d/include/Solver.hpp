@@ -17,11 +17,15 @@ public:
     double gamma, mach, aoa_deg;
     double rho_inf, u_inf, v_inf, p_inf, E_inf;
 
+    // ---- viscous parameters (Stage 3+) ----
+    double reynolds = 0.0;    // 0 = inviscid Euler
+    double prandtl  = 0.72;
+
     // ---- run config ----
-    double cfl;           // CFL during warmup (1st order phase)
-    double cfl_impl;      // CFL after warmup (implicit 2nd order phase)
+    double cfl;               // CFL during warmup (1st order phase)
+    double cfl_impl;          // CFL after warmup (2nd order + MUSCL)
     double residual_drop;
-    double omega = 1.0;         // LU-SGS under-relaxation factor
+    double omega = 1.0;
     int    max_iter, scheme_order, warmup_iters, output_interval;
 
     // MUSCL blending factor [0=first order, 1=full MUSCL]
@@ -31,6 +35,7 @@ public:
 
     void init(const Mesh& m,
               double mach, double aoa_deg, double gamma,
+              double reynolds, double prandtl,
               double cfl, double cfl_impl, double omega,
               int max_iter, double residual_drop,
               int scheme_order, int warmup_iters, int output_interval);

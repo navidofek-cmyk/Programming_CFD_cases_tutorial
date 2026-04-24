@@ -176,3 +176,19 @@ void bc_wake_cut(Solver& s) {
             s.U(var, i, -1) = s.U(var, im, 0);
     }
 }
+
+// ---- no-slip adiabatic wall BC (Stage 3+) -----------------------------------
+//
+// No-slip: u_ghost = -u_real, v_ghost = -v_real  → average u = 0 at wall face.
+// Adiabatic: T_ghost = T_real  → no heat flux through wall.
+// Since KE = u² + v² is unchanged, E_ghost = E_real exactly.
+void bc_wall_noslip(Solver& s) {
+    for (int i = 0; i < s.nci; ++i) {
+        double r = s.rho(i, 0);
+        double E = s.U(3, i, 0) / r;  // specific total energy (unchanged)
+        s.U(0, i, -1) =  r;
+        s.U(1, i, -1) = -s.U(1, i, 0);   // -ρu
+        s.U(2, i, -1) = -s.U(2, i, 0);   // -ρv
+        s.U(3, i, -1) =  r * E;           // ρE unchanged
+    }
+}

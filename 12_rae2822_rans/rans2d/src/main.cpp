@@ -61,8 +61,10 @@ int main(int argc, char* argv[]) {
     double mach          = std::stod(get_param(ini, "mach",           "0.729"));
     double aoa_deg       = std::stod(get_param(ini, "aoa_deg",        "2.31"));
     double gamma         = std::stod(get_param(ini, "gamma",          "1.4"));
+    double reynolds      = std::stod(get_param(ini, "reynolds",       "0.0"));
+    double prandtl       = std::stod(get_param(ini, "prandtl",        "0.72"));
     double cfl           = std::stod(get_param(ini, "cfl",            "1.5"));
-    double cfl_impl      = std::stod(get_param(ini, "cfl_impl",       "20.0"));
+    double cfl_impl      = std::stod(get_param(ini, "cfl_impl",       "0.8"));
     double omega         = std::stod(get_param(ini, "omega",          "1.0"));
     int    max_iter      = std::stoi(get_param(ini, "max_iter",       "2000"));
     double residual_drop = std::stod(get_param(ini, "residual_drop",  "1e-6"));
@@ -106,11 +108,12 @@ int main(int argc, char* argv[]) {
     // ---- Stage 2: LU-SGS Euler solver ----
     std::cout << "\n--- Stage 2: LU-SGS Euler solver ---\n";
     std::cout << "  M=" << mach << " AoA=" << aoa_deg
-              << "° CFL_warmup=" << cfl << " CFL_impl=" << cfl_impl
-              << " omega=" << omega << " order=" << scheme_order << "\n";
+              << "° Re=" << reynolds << " Pr=" << prandtl
+              << " CFL_warmup=" << cfl << " CFL_impl=" << cfl_impl << "\n";
 
     Solver solver;
     solver.init(mesh, mach, aoa_deg, gamma,
+                reynolds, prandtl,
                 cfl, cfl_impl, omega, max_iter, residual_drop,
                 scheme_order, warmup_iters, output_interval);
 

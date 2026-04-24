@@ -29,6 +29,7 @@ double Solver::sound(int i, int j) const {
 
 void Solver::init(const Mesh& m,
                   double mach_, double aoa_deg_, double gamma_,
+                  double reynolds_, double prandtl_,
                   double cfl_, double cfl_impl_, double omega_,
                   int max_iter_, double residual_drop_,
                   int scheme_order_, int warmup_iters_,
@@ -37,6 +38,8 @@ void Solver::init(const Mesh& m,
     gamma         = gamma_;
     mach          = mach_;
     aoa_deg       = aoa_deg_;
+    reynolds      = reynolds_;
+    prandtl       = prandtl_;
     cfl           = cfl_;
     cfl_impl      = cfl_impl_;
     omega         = omega_;
@@ -64,7 +67,8 @@ void Solver::init(const Mesh& m,
 }
 
 void Solver::apply_bc() {
-    bc_wall(*this);
+    if (reynolds > 0.0) bc_wall_noslip(*this);
+    else                bc_wall(*this);
     bc_farfield(*this);
     bc_wake_cut(*this);
     bc_i_exit(*this);
@@ -262,6 +266,103 @@ void Solver::compute_rhs(std::vector<double>& R,
     // Local time steps from spectral radius sum
     for (int k = 0; k < N; ++k)
         dt_cell[k] = (srad_cell[k] > 1e-30) ? cfl * m.area[k] / srad_cell[k] : 0.0;
+
+    // ---- Viscous fluxes (Stage 3+) — Thin-Layer NS ----------------------------
+    // Only when reynolds > 0.  Thin-layer approximation: only j-direction (wall-
+    // normal) viscous fluxes.  Gradients computed by direct cell-center difference
+    // rather than Green-Gauss, which is unstable on highly-stretched RANS meshes.
+    //
+    // Dominant physics: ∂τ/∂n drives wall friction; i-direction viscous terms are
+    // O(1/AR) smaller and omitted (thin-layer assumption, valid for Re >> 1).
+    //
+    // Non-dimensional: μ = 1/Re, κ = μ·γ/((γ-1)·Pr)
+    // Signs: R[L] += Fv·len/area_L, R[R] -= Fv·len/area_R
+
+    if (reynolds <= 0.0) return;
+
+    const double mu    = 1.0 / reynolds;
+    const double kappa = mu * gamma / ((gamma - 1.0) * prandtl);
+
+    // Helper: build Fv from normal gradient only (∂φ/∂n = Δφ/d in face-n direction)
+    auto viscous_face = [&](int kL, int kR,
+                            double nx, double ny, double len2,
+                            double dudn, double dvdn, double dTdn,
+                            double uf, double vf) {
+        // Normal-gradient stress (thin-layer: only ∂/∂n terms survive)
+        // Full: τ = μ(∂u_i/∂x_j + ∂u_j/∂x_i - 2/3 δ_ij ∇·u)
+        // Thin: ∇·u ≈ 0 for incompressible-like BL, τ_nn = 2μ ∂u_n/∂n,
+        //       τ_tn = μ ∂u_t/∂n (dominant shear term)
+        // Here we project the full gradient tensor assuming ∇φ ≈ (∂φ/∂n)*n:
+        double dudx = dudn*nx, dudy = dudn*ny;
+        double dvdx = dvdn*nx, dvdy = dvdn*ny;
+        double divu = dudx + dvdy;
+        double txx  = mu * (2*dudx - (2.0/3.0)*divu);
+        double tyy  = mu * (2*dvdy - (2.0/3.0)*divu);
+        double txy  = mu * (dudy + dvdx);
+        double Fv[4] = {
+            0.0,
+            txx*nx + txy*ny,
+            txy*nx + tyy*ny,
+            (txx*uf+txy*vf)*nx + (txy*uf+tyy*vf)*ny + kappa*dTdn
+        };
+        if (kL >= 0 && kL < (int)(m.area.size()) && m.area[kL] >= AREA_MIN) {
+            double invAL = 1.0/m.area[kL];
+            for (int v = 0; v < 4; ++v) R[v*N + kL] += Fv[v]*len2*invAL;
+        }
+        if (kR >= 0 && kR < (int)(m.area.size()) && m.area[kR] >= AREA_MIN) {
+            double invAR = 1.0/m.area[kR];
+            for (int v = 0; v < 4; ++v) R[v*N + kR] -= Fv[v]*len2*invAR;
+        }
+    };
+
+    for (int i = m.i_TEl; i < m.i_TEu; ++i) {
+        // Viscous j-fluxes only for airfoil cells (i_TEl..i_TEu-1).
+        // Wake cells are inviscid: h₁ there is ~45x smaller (larger outer-boundary
+        // separation), making the viscous CFL >> 0.5 on the explicit time step.
+
+        // ---- j=0 wall face: no-slip adiabatic ----
+        {
+            int kR = i;
+            if (m.area[kR] >= AREA_MIN) {
+                double nx = m.jfnx[i], ny = m.jfny[i];
+                double len2 = m.jflen[i];
+                if (len2 >= 1e-14) {
+                    double xw = 0.5*(m.node_x(i,0)+m.node_x(i+1,0));
+                    double yw = 0.5*(m.node_y(i,0)+m.node_y(i+1,0));
+                    double d  = (m.xc[kR]-xw)*nx + (m.yc[kR]-yw)*ny;
+                    if (d > 1e-15) {
+                        double uc = vel_u(i,0), vc = vel_v(i,0);
+                        // ∂u/∂n = u_real/d (ghost = -real gives diff = 2u over 2d)
+                        viscous_face(-1, kR, nx, ny, len2,
+                                     uc/d, vc/d, 0.0,  // dTdn=0 (adiabatic)
+                                     0.0, 0.0);          // u=v=0 at wall face
+                    }
+                }
+            }
+        }
+
+        // ---- j=1..ncj-1 interior j-faces ----
+        for (int j = 1; j < ncj; ++j) {
+            int kL = (j-1)*nci+i, kR = j*nci+i;
+            if (m.area[kL] < AREA_MIN || m.area[kR] < AREA_MIN) continue;
+            double nx = m.jfnx[j*nci+i], ny = m.jfny[j*nci+i];
+            double len2 = m.jflen[j*nci+i];
+            if (len2 < 1e-14) continue;
+
+            // Distance between cell centers projected onto face normal
+            double d_LR = (m.xc[kR]-m.xc[kL])*nx + (m.yc[kR]-m.yc[kL])*ny;
+            if (std::abs(d_LR) < 1e-20) continue;
+
+            double uL = vel_u(i,j-1), uR = vel_u(i,j);
+            double vL = vel_v(i,j-1), vR = vel_v(i,j);
+            double TL = gamma*press(i,j-1)/rho(i,j-1);
+            double TR = gamma*press(i,j  )/rho(i,j  );
+
+            viscous_face(kL, kR, nx, ny, len2,
+                         (uR-uL)/d_LR, (vR-vL)/d_LR, (TR-TL)/d_LR,
+                         0.5*(uL+uR), 0.5*(vL+vR));
+        }
+    }
 }
 
 // ---- LU-SGS -----------------------------------------------------------------
