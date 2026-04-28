@@ -67,7 +67,7 @@ void Solver::init(const Mesh& m,
                   double cfl_, double cfl_impl_, double omega_,
                   int max_iter_, double residual_drop_,
                   int scheme_order_, int warmup_iters_,
-                  int output_interval_) {
+                  int output_interval_, int sa_start_offset_) {
     pmesh         = &m;
     gamma         = gamma_;
     mach          = mach_;
@@ -81,8 +81,9 @@ void Solver::init(const Mesh& m,
     max_iter      = max_iter_;
     residual_drop = residual_drop_;
     scheme_order  = scheme_order_;
-    warmup_iters  = warmup_iters_;
+    warmup_iters    = warmup_iters_;
     output_interval = output_interval_;
+    sa_start_offset = sa_start_offset_;
 
     nci = m.nc_i();
     ncj = m.nc_j();
@@ -815,7 +816,7 @@ void Solver::run() {
         // SA is frozen during NS warmup to avoid explosive transient on the initial
         // uniform SA field (SA CFL > 1 at wall cells during stagnation-zone establish).
         // After warmup the NS has established the BL; SA activates from uniform 3/Re.
-        if (do_sa && iter > warmup_iters) {
+        if (do_sa && iter > warmup_iters + sa_start_offset) {
             apply_bc();
             compute_sa_rhs(R_sa, D_sa, dt_cell);
             for (int j = 0; j < ncj; ++j)

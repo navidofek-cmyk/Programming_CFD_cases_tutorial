@@ -31,6 +31,7 @@ public:
     double residual_drop;
     double omega = 1.0;
     int    max_iter, scheme_order, warmup_iters, output_interval;
+    int    sa_start_offset = 0;  // extra order-2 NS iters before SA activates
 
     double muscl_factor = 0.0;
 
@@ -41,7 +42,8 @@ public:
               double reynolds, double prandtl, double prandtl_t,
               double cfl, double cfl_impl, double omega,
               int max_iter, double residual_drop,
-              int scheme_order, int warmup_iters, int output_interval);
+              int scheme_order, int warmup_iters, int output_interval,
+              int sa_start_offset = 0);
 
     void run();
 
