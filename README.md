@@ -1,197 +1,110 @@
-# Programming CFD Cases Tutorial
+# CFD Solver Implementations — Incompressible & Compressible Flow
 
-Educational 2D CFD mini-cases in modern C++.
+Twelve standalone C++ solvers covering the core numerical methods used in industrial CFD codes. Each case targets a specific physical regime and numerical scheme, written for clarity and correctness rather than production-scale performance.
 
-The goal of this repository is to build readable numerical examples step by step:
+No external libraries. Standard C++17 only. Each case compiles and runs independently.
 
-- simple physics
-- compact code
-- no external dependencies
-- standard library only
-- educational structure rather than production complexity
+---
 
-## Cases Overview
+## Why These Methods Matter in Practice
 
-| Case | Description | Method | Status |
-|---|---|---|---|
-| `01_cavity_case` | Lid-driven cavity | Finite differences + projection | available |
-| `02_laminar_channel_obstacle` | Steady channel flow with square obstacle | Cell-centered FVM + SIMPLE-like pseudo-time | available |
-| `03_channel_obstacle_unsteady` | Unsteady channel flow with square obstacle | Cell-centered transient solver + PISO-like corrections | available |
-| `04_laminar_channel_obstacle_rebuild` | Rebuilt steady obstacle solver | Staggered MAC-style layout + SIMPLE/SOR | available |
-| `05_laminar_channel_simple` | Simple laminar channel / Poiseuille case | Staggered channel solver | available |
-| `06_exact_riemann_solver_1d_euler` | Exact 1D Euler reference case | Exact Riemann solution | available |
-| `07_laval_nozzle_quasi_1d` | Quasi-1D compressible Laval nozzle | Explicit MacCormack + area source term | available |
-| `08_2d_euler_quadrant_riemann` | First 2D compressible Euler case | 2D FV + Rusanov flux | available |
-| `09_2d_euler_oblique_shock` | Supersonic ramp / wedge case | 2D FV + Rusanov flux | available |
-| `10_hllc_muscl_upgrade` | Sharper oblique-shock upgrade | HLLC + MUSCL + minmod | available |
+The numerical kernels implemented here are the same ones that underpin commercial solvers — OpenFOAM, ANSYS Fluent, Star-CCM+:
 
-## 01_cavity_case
+- **SIMPLE / PISO** — pressure–velocity coupling in every steady and transient incompressible solver used in process equipment, heat exchangers, and duct systems
+- **Riemann-based flux schemes (Rusanov, HLLC)** — foundation of compressible solvers for gas turbines, relief valve sizing, safety blow-down, and supersonic nozzle design
+- **MUSCL + slope limiters** — the standard route to second-order accuracy in shock-capturing without spurious oscillations; present in any production compressible solver
+- **RANS closure** — industrial standard for turbulent flows in pipelines, separators, and heat transfer equipment
 
-2D lid-driven cavity flow:
+Knowing how these work at the implementation level improves solver setup, boundary condition choices, convergence troubleshooting, and mesh sensitivity interpretation in production work.
 
-- incompressible Navier-Stokes
-- finite differences on a structured Cartesian grid
-- projection / pressure-correction style approach
-- explicit momentum update
-- CSV export
-- VTK export for ParaView
+---
+
+## Cases
+
+### Incompressible Flow
+
+| Case | Physical Setup | Numerical Method |
+|---|---|---|
+| `01_cavity_case` | Lid-driven cavity | Finite differences, projection/pressure-correction |
+| `02_laminar_channel_obstacle` | Steady channel with bluff-body obstacle | Cell-centred FVM, SIMPLE pseudo-time |
+| `03_channel_obstacle_unsteady` | Transient wake behind obstacle | Cell-centred FVM, PISO corrections |
+| `04_laminar_channel_obstacle_rebuild` | Steady obstacle flow (rebuilt) | Staggered MAC layout, SIMPLE/SOR |
+| `05_laminar_channel_simple` | Poiseuille channel reference | Staggered channel solver |
+
+**Physical observables:** pressure–velocity coupling behaviour, bluff-body wake development, convergence rates of segregated solvers.
+
+### Compressible Flow
+
+| Case | Physical Setup | Numerical Method |
+|---|---|---|
+| `06_exact_riemann_solver_1d_euler` | 1D shock-tube / Riemann problem | Exact star-region solve |
+| `07_laval_nozzle_quasi_1d` | Quasi-1D Laval nozzle, choked flow | MacCormack predictor-corrector, area source |
+| `08_2d_euler_quadrant_riemann` | 2D quadrant Riemann initial data | Cell-centred FV, Rusanov flux |
+| `09_2d_euler_oblique_shock` | Supersonic ramp, oblique shock | Cell-centred FV, Rusanov flux, CFL stepping |
+| `10_hllc_muscl_upgrade` | Oblique shock — improved resolution | HLLC Riemann solver, MUSCL, minmod limiter |
+| `11_rae2822_trans` | RAE2822 airfoil — transonic regime | 2D FV, transonic flow conditions |
+| `12_rae2822_rans` | RAE2822 airfoil — turbulent flow | RANS closure |
+
+**Physical observables:** shock standoff and angle, Mach number distribution, pressure coefficient along airfoil, RANS vs. inviscid comparison.
+
+---
+
+## Numerical Methods Reference
+
+| Category | Methods implemented |
+|---|---|
+| Pressure–velocity coupling | Explicit projection, SIMPLE, PISO |
+| Flux evaluation | Upwind, Rusanov (LLF), HLLC |
+| Reconstruction | First-order, MUSCL with minmod limiter |
+| Grid types | Structured Cartesian, staggered MAC |
+| Time integration | Explicit Euler, MacCormack predictor-corrector |
+| Obstacle handling | Cartesian mask (immersed solid) |
+
+---
+
+## Output and Post-processing
+
+All cases export results to CSV and/or VTK format. VTK files open directly in ParaView for field visualisation (velocity components, pressure, density, Mach number, temperature — depending on case).
 
 ```bash
-cd 01_cavity_case
-./run.sh
-```
-
-## 02_laminar_channel_obstacle
-
-2D laminar channel flow with a square obstacle:
-
-- incompressible laminar Navier-Stokes
-- cell-centered finite volume method
-- structured Cartesian mesh
-- SIMPLE-like pseudo-time steady iterations
-- obstacle represented by a masked solid region
-- CSV export
-
-This case is intentionally simple and educational. It is useful for studying:
-
-- pressure-velocity coupling
-- obstacle masking on a Cartesian grid
-- wake formation behind a bluff body
-- practical convergence behavior of a simple segregated solver
-
-```bash
+# Example: steady obstacle case
 cd 02_laminar_channel_obstacle
 make
 ./channel_obstacle
-```
+# outputs: fields.csv, pressure.csv
 
-## 03_channel_obstacle_unsteady
-
-Transient companion to the steady obstacle case:
-
-- incompressible laminar Navier-Stokes
-- structured Cartesian mesh with masked square obstacle
-- explicit predictor step with pressure correction
-- PISO-like multiple corrections per time step
-- CSV export for final fields
-- VTK snapshots for ParaView
-
-This case is meant for studying actual wake development in time instead of forcing the obstacle wake into a steady-state interpretation.
-
-```bash
-cd 03_channel_obstacle_unsteady
-make
-./channel_obstacle_unsteady
-```
-
-## 04_laminar_channel_obstacle_rebuild
-
-Rebuilt steady channel-with-obstacle case with a cleaner pressure-velocity arrangement:
-
-- staggered / MAC-style variable placement
-- SIMPLE-like steady coupling
-- structured Cartesian mesh
-- CSV output
-
-```bash
-cd 04_laminar_channel_obstacle_rebuild
-make
-./cfd_channel
-```
-
-## 05_laminar_channel_simple
-
-Simple laminar channel-flow case intended as a cleaner reference problem:
-
-- structured channel geometry
-- staggered-style formulation
-- useful for comparing against expected Poiseuille-like behavior
-
-```bash
-cd 05_laminar_channel_simple
-make
-./channel_flow
-```
-
-## 06_exact_riemann_solver_1d_euler
-
-Reference exact solution for the 1D compressible Euler Riemann problem:
-
-- exact star-region solve for `p*` and `u*`
-- wave-pattern sampling at user-selected time
-- useful as a benchmark for later approximate compressible solvers
-
-```bash
-cd 06_exact_riemann_solver_1d_euler
-make
-./exact_riemann
-```
-
-## 07_laval_nozzle_quasi_1d
-
-Educational compressible nozzle-flow case:
-
-- quasi-1D Euler equations
-- variable area duct
-- explicit MacCormack predictor-corrector
-- CSV output for `rho`, `u`, `p`, `T`, `M`
-
-```bash
-cd 07_laval_nozzle_quasi_1d
-make
-./nozzle_solver
-```
-
-## 08_2d_euler_quadrant_riemann
-
-Educational first 2D compressible Euler solver:
-
-- quadrant Riemann initial data
-- cell-centered finite volume method
-- explicit time stepping
-- local Rusanov fluxes in `x` and `y`
-- VTK snapshots for ParaView
-
-```bash
-cd 08_2d_euler_quadrant_riemann
-make
-./euler2d
-```
-
-## 09_2d_euler_oblique_shock
-
-Educational oblique-shock case:
-
-- supersonic inlet
-- stair-step ramp mask on a Cartesian grid
-- 2D Euler finite volume method
-- explicit CFL stepping
-- Rusanov flux
-- VTK snapshots
-
-```bash
+# Example: 2D oblique shock
 cd 09_2d_euler_oblique_shock
 make
 ./oblique_shock
+paraview output_*.vtk
 ```
 
-## 10_hllc_muscl_upgrade
+Python scripts for CSV plotting (matplotlib) are included where applicable.
 
-Numerical upgrade of the oblique-shock case:
+---
 
-- same ramp geometry as `09`
-- HLLC approximate Riemann solver
-- MUSCL reconstruction
-- minmod slope limiter
+## Build
+
+C++17, no external dependencies.
 
 ```bash
-cd 10_hllc_muscl_upgrade
+cd <case_directory>
 make
-./oblique_shock_hllc
+./solver_name
 ```
 
-## Notes
+Or compile directly:
 
-- These solvers are educational mini-codes, not production CFD tools.
-- Numerical choices are intentionally simplified and commented honestly.
-- The focus is readability, experimentation, and learning core CFD ideas.
+```bash
+g++ -std=c++17 -O2 main.cpp -o solver
+./solver
+```
+
+Each case directory contains a short note on physical setup, expected flow behaviour, and result interpretation.
+
+**Requirements:**
+- GCC 9+ or Clang 10+
+- Make
+- ParaView (optional, for VTK output)
+- Python 3.8+ with matplotlib (optional, for CSV plots)
